@@ -16,7 +16,9 @@ class FilmListPresenter @Inject constructor(repository: FilmDataRepository):
 
     override fun loadFilms() {
         val job: Job = GlobalScope.launch(Dispatchers.IO) {
-            view?.showProgressDialog()
+            withContext(Dispatchers.Main) {
+                view?.showProgressDialog()
+            }
 
             when(val result = dataRepository.filmListRemote()) {
                 is Result.Success -> {
@@ -34,43 +36,49 @@ class FilmListPresenter @Inject constructor(repository: FilmDataRepository):
                     }
                 }
             }
-            view?.hideProgressDialog()
+            withContext(Dispatchers.Main) {
+                view?.hideProgressDialog()
+            }
         }
         job.start()
     }
 
     suspend fun showFilms() {
-            val filmList = dataRepository.filmListLocal()
-            val genreList = dataRepository.genreListLocal()
-            val showList = mutableListOf<FilmModel>()
-            showList.add(FilmModel.HeaderModel(Header(Constants.HEADER_GENRES)))
-            genreList.forEach{ genre ->
-                showList.add(FilmModel.GenreModel(genre))
+        val filmList = dataRepository.filmListLocal()
+        val genreList = dataRepository.genreListLocal()
+        val showList = mutableListOf<FilmModel>()
+        showList.add(FilmModel.HeaderModel(Header(Constants.HEADER_GENRES)))
+        genreList.forEach{ genre ->
+            showList.add(FilmModel.GenreModel(genre))
+        }
+        showList.add(FilmModel.HeaderModel(Header(Constants.HEADER_FILMS)))
+        filmList.forEach { filmEntity ->
+            showList.add(FilmModel.FilmEntityModel(filmEntity))
+        }
+        if(filmList.isNotEmpty() && genreList.isNotEmpty()) {
+            withContext(Dispatchers.Main) {
+                view?.refreshFilmList(showList)
             }
-            showList.add(FilmModel.HeaderModel(Header(Constants.HEADER_FILMS)))
-            filmList.forEach { filmEntity ->
-                showList.add(FilmModel.FilmEntityModel(filmEntity))
-            }
-            if(filmList.isNotEmpty() && genreList.isNotEmpty()) {
-                withContext(Dispatchers.Main) {
-                    view?.refreshFilmList(showList)
-                }
-            } else {
-                withContext(Dispatchers.Main) {
-                    view?.showEmptyList()
-                }
+        } else {
+            withContext(Dispatchers.Main) {
+                view?.showEmptyList()
             }
         }
+    }
 
     override fun showFilmsByGenre(genre: String) {
         val job: Job = GlobalScope.launch(Dispatchers.IO) {
-            view?.showProgressDialog()
+            withContext(Dispatchers.Main) {
+                view?.showProgressDialog()
+            }
             val filmList = dataRepository.filmListByGenreLocal(genre)
             Log.d("myLogs", filmList.size.toString())
             val genreList = dataRepository.genreListLocal()
             val showList = mutableListOf<FilmModel>()
             showList.add(FilmModel.HeaderModel(Header(Constants.HEADER_GENRES)))
-            view?.hideProgressDialog()
+            withContext(Dispatchers.Main) {
+                view?.hideProgressDialog()
+            }
             genreList.forEach{ genre ->
                 showList.add(FilmModel.GenreModel(genre))
             }

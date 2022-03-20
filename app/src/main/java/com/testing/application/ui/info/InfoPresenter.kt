@@ -10,14 +10,18 @@ class InfoPresenter @Inject constructor(repository: FilmDataRepository):
 
     override fun getDetails(id: Int) {
         val job: Job = GlobalScope.launch(Dispatchers.IO) {
-            view?.showProgressDialog()
+            withContext(Dispatchers.Main) {
+                view?.showProgressDialog()
+            }
             val result = dataRepository.filmById(id)
             result?.let {
                 withContext(Dispatchers.Main) {
                     view?.showDetails(result)
                 }
             }
-            view?.hideProgressDialog()
+            withContext(Dispatchers.Main) {
+                view?.hideProgressDialog()
+            }
         }
         job.start()
     }
